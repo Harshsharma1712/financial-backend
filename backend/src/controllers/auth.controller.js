@@ -33,7 +33,7 @@ function generateToken(userId, roleNames) {
  */
 export const signup = async (req, res, next) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role = "viewer" } = req.body;
 
         // Check if user already exists
         const existing = await db
@@ -54,27 +54,27 @@ export const signup = async (req, res, next) => {
             .values({ name, email, password: hashedPassword })
             .returning({ id: users.id, name: users.name, email: users.email });
 
-        // Assign default 'viewer' role
-        const [viewerRole] = await db
+        // Assign requested or default role
+        const [targetRole] = await db
             .select({ id: roles.id })
             .from(roles)
-            .where(eq(roles.name, "viewer"));
+            .where(eq(roles.name, role));
 
-        if (viewerRole) {
+        if (targetRole) {
             await db
                 .insert(userRoles)
-                .values({ userId: newUser.id, roleId: viewerRole.id });
+                .values({ userId: newUser.id, roleId: targetRole.id });
         }
 
         // Generate token
-        const token = generateToken(newUser.id, ["viewer"]);
+        const token = generateToken(newUser.id, [role]);
 
         res.status(201).json({
             success: true,
             message: "User registered successfully",
             data: {
                 user: newUser,
-                roles: ["viewer"],
+                roles: [role],
                 token,
             },
         });

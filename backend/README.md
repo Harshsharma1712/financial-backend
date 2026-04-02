@@ -56,10 +56,10 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 ### Test Flow:
-1. Register a new user via `POST /api/auth/signup`. By default, new users get the `viewer` role.
+1. Register a new user via `POST /api/auth/signup`. By default, new users get the `viewer` role, but you can explicitly pass `"role": "admin"` or `"role": "analyst"` in the body during signup to automatically receive that role (for testing/convenience purposes).
 2. Login via `POST /api/auth/login` to receive your JWT token.
 3. Use this token in the `Authorization` header for subsequent requests.
-4. *(Setup)* To test `admin` endpoints, you'll need to manually assign the `admin` role to a user directly in the Neon Database (`user_roles` table), or use an already established admin account to assign roles.
+4. *(Setup)* To test `admin` endpoints, ensure your user was signed up with `"role": "admin"`. Use your generated token when hitting admin-protected endpoints.
 
 ---
 
@@ -68,7 +68,7 @@ Authorization: Bearer <your_jwt_token>
 ### 1. Auth (Public)
 | Method | Endpoint | Description | Payload |
 |---|---|---|---|
-| POST | `/api/auth/signup` | Register a new user | `{ name, email, password }` |
+| POST | `/api/auth/signup` | Register a new user | `{ name, email, password, role? }` |
 | POST | `/api/auth/login` | Login and get JWT | `{ email, password }` |
 
 ### 2. User Management (Admin Only)
@@ -120,7 +120,8 @@ We recommend using **Postman**, **Insomnia**, or the **VS Code Thunder Client** 
    {
        "name": "Test User",
        "email": "test@example.com",
-       "password": "password123"
+       "password": "password123",
+       "role": "admin"
    }
    ```
 2. Copy the `token` from the response.
@@ -130,7 +131,5 @@ We recommend using **Postman**, **Insomnia**, or the **VS Code Thunder Client** 
    - Value: `Bearer <your_copied_token_here>`
 5. Send the request to view the authorized response.
 
-### Handling Admin Roles for Initial Testing
-Since signups default to `viewer` and only `admin` users can assign roles via the API, for testing purposes you can either:
-1. Access the Neon DB console directly and manually insert a record into the `user_roles` table linking your User ID to the Admin Role ID.
-2. Or temporary bypass the `requireRole("admin")` middleware in a route if you just want to test creation logic locally.
+### Admin Testing Note
+Because the signup endpoint specifically allows you to test different roles by passing `"role": "admin"` in the payload, you do not need to manually configure the Neon DB to start testing your administrative endpoints!
